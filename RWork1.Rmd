@@ -1,0 +1,123 @@
+---
+title: "Staj_1"
+author: "yirem"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#staj pratigi
+
+Console üzerinde rmarkdown paketini yükledik. install.packages("")
+
+paketleri yükledikten sonra aktive etmek gerekiyor.
+
+```{r}
+library(rmarkdown)
+library(ggplot2)
+library(ggrepel)
+library(reshape2)
+```
+
+veriyi aldik. (sutun ornek isimleri, satirda gen isimleri var)
+
+```{r}
+data <- read.table(file = "brain-expression-small-GSE50161.txt", header = T, sep = " ")
+```
+
+Metaveriyi aldik.
+
+```{r}
+metadata <- read.table(file = "metadata-GSE50161.txt", header = T, stringsAsFactors = FALSE)
+```
+
+Veriyi transpoze etmeliyiz (gen isimleri sutun, ornek isimleri satir olmali)
+
+```{r}
+data_t<-data.frame(t(data))
+data_t$Durum<-as.factor(metadata$Durum)
+```
+
+PCA analizi ile verilerin nasil gruplandiklarina bakalim:
+
+```{r}
+#pca<-prcomp(x = t(data))
+
+#d <- as.data.frame(pca$x)
+#d$Durum <- metadata$Durum
+#d$Ornek <- metadata$Ornek
+
+#ggplot(d, aes(x=PC1, y=PC2, color=Durum)) + 
+  #geom_point() + 
+  #geom_text_repel(aes(label = Ornek)) + 
+  #theme_bw()
+```
+
+Ve her ornek icin boxplot yapalim:
+
+```{r}
+#boxplot(data)
+```
+
+Transpoze edilmis veri ile random forest modelini kuralim
+
+```{r}
+library(randomForest)
+model <- randomForest(Durum ~ ., data = data_t, importance = TRUE)
+```
+
+Ve modeli inceleyelim:
+
+```{r}
+model
+```
+
+Kanserin belirleyicisi olan genleri onemlilik derecelerine gore siralayalim ve en onemli 10 tanesini yeni bir veri setine aktarip gorunteleyelim: (KODU)
+
+##staj pratigi 2
+
+Git, versiyon kontrol sistemidir. Bir veritabanidir ve proje yedekleme, versiyon takibinin duzenli olarak yapilmasi,önceki versiyonlara gidebilme ve değişiklik yaapabilme olanaklari saglar. GitHub ise Git dosyalari ve klasörlerinin depolandigi yerdir.
+
+Repository kismina yaptigimiz tum calismalari atabiliriz.
+
+Git dosyalarimizi herkesle paylasabilir (public) ya da sadece biz gorecek sekilde olusturabiliriz (private).
+
+```{r}
+#commit etmek Git dosyasinda degisiklik yapip kaydetmek anlamina gelir.
+```
+
+Issue sayesinde farkli yazilimcilar birbirinden destek alabilir veya birbiriyle yardimlasabilir (ortak calisma platformu gibi!).
+
+```{r}
+#BASIC BASH KOMUTLARI;
+#pwd() -> Bulunulan yeri/ dizini gosterir.
+#ls -> Bulunulan klasorun icindeki (altindaki) tum klasor ve dosyalari gosterir.
+#ls -a -> Gizli dosya ve klasorleri gostermek icin kullanilir.
+#cd -> İstenen klasöre girilmesini saglar.
+#mkdir -> Bulunulan dizinde klasör olusturur.
+#clear -> Terminali temizler. (sanırım cls komutu da oluyor!)
+```
+
+Git ile Commit Atmak ve İstenen Commite Geri Dönmek İçin Komutlar;
+
+```{r}
+#git config --global user.name "" -> Isim vermek icin. (mail icinse user.email)
+#git init -> Proje olusturmak icin. (gizli .git dosyasi olusturuyor!)
+#git status -> Branch göstermek icin. (commit yapildi mi veya kacinci commit oldugunu gösteriyor!)(Neyi commitleyeceksek "git add <file>" ile bastan dosya adi yazarak belirtiyoruz)
+#git add. -> Tüm dosyalari denetlemek icin. (klasör icindeki)
+#git commit -m "ilk hali" -> Commit veya islem yapmak icin.
+#git commit -a -m "ikinci hali" -> Eklenti yapmak icin.
+#git log -> Kayit tutmak icin. (son durumdaki hali gösterir!)
+#git checkout <sari commit ID>(Ctrl+Insert) -> Istenen commite geri dönülmesini saglar.
+```
+
+
+
+
+
+
+
+
+
+
