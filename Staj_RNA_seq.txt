@@ -1,0 +1,2 @@
+Staj_RNA_seq
+Repoya katkida bulunmak icin gereken temel adimlari inceledik.
