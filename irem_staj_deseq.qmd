@@ -1,0 +1,213 @@
+---
+title: "Differential Expression Analysis with DESeq"
+author: "Yasemin ??rem ??AH??N"
+format: html
+editor: visual
+---
+
+Loglari iptal ettik
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+bioconductor y??klwmw
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = "3.19")
+BiocManager::install(c("GenomicFeatures", "AnnotationDbi"))
+```
+
+
+
+
+Kutuphaneleri yukleyelim
+
+```{r}
+library("DESeq2")
+library("pheatmap")
+library("ggplot2")
+library("kableExtra")
+library("ggrepel")
+library("limma")
+library("affy")
+
+library("R.utils")
+library("dplyr")
+library("tidyverse")
+library("readr")
+library("contrast")
+library("igraph")
+library("ggraph")
+library("dendextend")
+library("reshape2")
+```
+
+Metadatay?? tan??mlayal??m
+
+```{r}
+metadata <- read.table(file = "data/data.txt", sep = "" , header = F)
+colnames(metadata) <- c("Sample", "Layout", "Condition")
+rownames(metadata) <- metadata$Sample
+```
+
+Say?? matrislerini birle??tirelim
+
+```{r}
+count_matrix <- read.table(file = paste0("data/counts-",  metadata$Sample[1], "-bwa.txt"), header=T)
+
+count_matrix <- count_matrix[ ,c(1,7)]
+
+rownames(count_matrix) <- count_matrix$Geneid
+
+count_matrix$Geneid <- NULL
+
+colnames(count_matrix) <- metadata$Sample[1]
+  
+for (i in 2:nrow(metadata)){
+  data <- read.table(file = paste0("data/counts-",  metadata$Sample[i], "-bwa.txt"), header=T)
+  data <- data[ ,c(1,7)]
+  rownames(data) <- data$Geneid
+  data$Geneid <- NULL
+  colnames(data) <- metadata$Sample[i]
+  count_matrix <- merge(x = count_matrix, y = data, by = 'row.names')
+  rownames(count_matrix) <- count_matrix$Row.names
+  count_matrix$Row.names <- NULL
+}
+
+```
+
+
+count_matrix kontrol
+
+```{r}
+dim(count_matrix)
+```
+
+DESeq iElemine baElD1yoruz:
+
+DESeq kodumuzu kurduk, komut default olarak alfabetik sD1rada C6nde olan conditionu ''kontrol'' olarak alD1r. Bizim burada relevel ile spesifik olarak kontrol grubumuzu belirtmemiz gerekir.
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = count_matrix, colData = metadata, design=~Condition)
+```
+
+dusuk anlatD1mlarD1 silelim?
+
+```{r}
+keep <- rowMeans(counts(dds)) >= 10
+delete <- rowMeans(counts(dds)) < 10
+```
+
+silinenleri yazdD1ralD1m?
+
+```{r}
+write.csv2(file = "non-expressed-genes.csv", x=count_matrix[delete,])
+```
+
+test
+
+```{r}
+write.csv2(file = "expressed-genes-test.csv", x=count_matrix[keep,])
+```
+
+DESeq?
+
+```{r}
+dds <- dds[keep,]
+dds <- DESeq(dds)
+res_dds <- results(dds)
+res_dds <- res_dds[order(res_dds$padj),]
+resultsNames(dds)
+```
+
+
+ben bu matrisi saklamak istiyorum
+
+```{r}
+write.csv2(file = "dds_results_matrix.csv", x=res_dds)
+```
+
+normalizasyon?
+
+```{r}
+normalized_counts <- counts(dds, normalized = T)
+```
+
+dendogram (puntolarD1 kC\<C'C\<lt)
+
+```{r}
+a <- normalized_counts
+colnames(a) <- dds$Condition
+dend <- hclust(dist(x = t(a)))
+
+plot(dend, cex = 0.4, color = dds$Condition)
+```
+
+PCA analizi
+
+```{r}
+pca <- prcomp(x=t(normalized_counts))
+
+pca_data <- as.data.frame(pca$x)
+pca_data$Case <- metadata$Condition
+pca_data$Sample <- metadata$Sample
+
+ggplot(pca_data, aes(x=PC1, y=PC2, color=metadata$Condition)) + geom_point() + theme_bw()
+```
+
+
+p 0,05e g??re anlaml?? ka?? gen var?
+
+```{r}
+sum(res_dds$padj < 0.05, na.rm = T)
+```
+
+outlierlara bakalD1m
+
+
+```{r}
+outliers <- count_matrix[res_dds[is.na(res_dds$Padj),]$Geneid,]
+nrow(outliers)
+```
+volcano plot
+
+```{r}
+#maxFold <- max(res_dds$log2FoldChange[!is.na(res_dds$log2FoldChange)])
+#minFold <- min(res_dds$log2FoldChange[!is.na(res_dds$log2FoldChange)])
+
+#par(mfrow = c(1,1))
+
+#with(res_dds, plot(log2FoldChange, -log10(padj), pch=20, main="Volcano plot", xlim=c(minFold, maxFold)))
+
+#with(subset(res_dds, padj<0.05), points(log2FoldChange, -log10(padj), pch=20, col="purple"))
+
+#with(subset(res_dds, padj<0.05 & abs(log2FoldChange)>1), points(log2FoldChange, -log10(padj), pch=20, col="pink"))
+```
+
+-inf deDerleri 0 yapalD1m
+
+```{r}
+sig_ptd <- normalized_counts[res_dds$Geneid,]
+logsig_ptd <- log2(sig_ptd)
+logsig_ptd[logsig_ptd == -Inf] <- 0
+
+```
+
+sonucu excell i??in aal??m
+
+```{r}
+write.table(file = "sonuc.csv", sep = ";", quote = FALSE, x=logsig_ptd, dec = ",")
+```
+
+boxplot iEleri (exstra bilgi)
+
+```{r}
+#par(mfrow = c(4,6))
+#par(mar=c(1,1,1,1))
+#for (gene_id in logsig_ptd$Gene_id) {boxplot(normalized_counts[gene_id,]~metadata$Condition, cex = 0.4, #main=paste0("Gene Expression", logsig_ptd[gene_id,1]))
+ # boxplot(normalized_counts_sub["ENSG00000267107",])
+#}
+```
