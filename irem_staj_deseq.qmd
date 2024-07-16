@@ -5,13 +5,13 @@ format: html
 editor: visual
 ---
 
-Loglari iptal ettik
+Loglari iptal ettik.
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-bioconductor y??klwmw
+Bioconductor yukledik.
 
 ```{r}
 if (!require("BiocManager", quietly = TRUE))
@@ -20,10 +20,7 @@ BiocManager::install(version = "3.19")
 BiocManager::install(c("GenomicFeatures", "AnnotationDbi"))
 ```
 
-
-
-
-Kutuphaneleri yukleyelim
+Kutuphaneleri yukleyelim.
 
 ```{r}
 library("DESeq2")
@@ -33,7 +30,6 @@ library("kableExtra")
 library("ggrepel")
 library("limma")
 library("affy")
-
 library("R.utils")
 library("dplyr")
 library("tidyverse")
@@ -45,7 +41,7 @@ library("dendextend")
 library("reshape2")
 ```
 
-Metadatay?? tan??mlayal??m
+Metadatayi tanimlayalim.
 
 ```{r}
 metadata <- read.table(file = "data/data.txt", sep = "" , header = F)
@@ -53,7 +49,7 @@ colnames(metadata) <- c("Sample", "Layout", "Condition")
 rownames(metadata) <- metadata$Sample
 ```
 
-Say?? matrislerini birle??tirelim
+Sayi matrislerini birlestirelim.
 
 ```{r}
 count_matrix <- read.table(file = paste0("data/counts-",  metadata$Sample[1], "-bwa.txt"), header=T)
@@ -79,41 +75,40 @@ for (i in 2:nrow(metadata)){
 
 ```
 
-
-count_matrix kontrol
+count_matrix kontrol edildi.
 
 ```{r}
 dim(count_matrix)
 ```
 
-DESeq iElemine baElD1yoruz:
+DESeq islemine basliyoruz:
 
-DESeq kodumuzu kurduk, komut default olarak alfabetik sD1rada C6nde olan conditionu ''kontrol'' olarak alD1r. Bizim burada relevel ile spesifik olarak kontrol grubumuzu belirtmemiz gerekir.
+DESeq kodumuzu kurduk, komut default olarak alfabetik sirada onde olan condition'ı ''kontrol'' olarak alir.
 
 ```{r}
 dds <- DESeqDataSetFromMatrix(countData = count_matrix, colData = metadata, design=~Condition)
 ```
 
-dusuk anlatD1mlarD1 silelim?
+dusuk anlatimlari silelim.
 
 ```{r}
 keep <- rowMeans(counts(dds)) >= 10
 delete <- rowMeans(counts(dds)) < 10
 ```
 
-silinenleri yazdD1ralD1m?
+silinenleri yazdiralim.
 
 ```{r}
 write.csv2(file = "non-expressed-genes.csv", x=count_matrix[delete,])
 ```
 
-test
+test edelim.
 
 ```{r}
 write.csv2(file = "expressed-genes-test.csv", x=count_matrix[keep,])
 ```
 
-DESeq?
+DESeq yapalim.
 
 ```{r}
 dds <- dds[keep,]
@@ -123,20 +118,19 @@ res_dds <- res_dds[order(res_dds$padj),]
 resultsNames(dds)
 ```
 
-
-ben bu matrisi saklamak istiyorum
+Bu matrisi saklayalim.
 
 ```{r}
 write.csv2(file = "dds_results_matrix.csv", x=res_dds)
 ```
 
-normalizasyon?
+normalizasyon yapalim.
 
 ```{r}
 normalized_counts <- counts(dds, normalized = T)
 ```
 
-dendogram (puntolarD1 kC\<C'C\<lt)
+dendogram olusturalim (puntolari kuculterek).
 
 ```{r}
 a <- normalized_counts
@@ -146,7 +140,7 @@ dend <- hclust(dist(x = t(a)))
 plot(dend, cex = 0.4, color = dds$Condition)
 ```
 
-PCA analizi
+PCA analizi yapalim.
 
 ```{r}
 pca <- prcomp(x=t(normalized_counts))
@@ -158,21 +152,20 @@ pca_data$Sample <- metadata$Sample
 ggplot(pca_data, aes(x=PC1, y=PC2, color=metadata$Condition)) + geom_point() + theme_bw()
 ```
 
-
-p 0,05e g??re anlaml?? ka?? gen var?
+p 0,05e gore anlamli kac gen var diye bakalim.
 
 ```{r}
 sum(res_dds$padj < 0.05, na.rm = T)
 ```
 
-outlierlara bakalD1m
-
+outlierlara bakalim.
 
 ```{r}
 outliers <- count_matrix[res_dds[is.na(res_dds$Padj),]$Geneid,]
 nrow(outliers)
 ```
-volcano plot
+
+Volcano plot olusturalim.
 
 ```{r}
 #maxFold <- max(res_dds$log2FoldChange[!is.na(res_dds$log2FoldChange)])
@@ -187,7 +180,7 @@ volcano plot
 #with(subset(res_dds, padj<0.05 & abs(log2FoldChange)>1), points(log2FoldChange, -log10(padj), pch=20, col="pink"))
 ```
 
--inf deDerleri 0 yapalD1m
+-inf degerleri 0 yapalim.
 
 ```{r}
 sig_ptd <- normalized_counts[res_dds$Geneid,]
@@ -196,13 +189,13 @@ logsig_ptd[logsig_ptd == -Inf] <- 0
 
 ```
 
-sonucu excell i??in aal??m
+sonucu excell icin alalim.
 
 ```{r}
 write.table(file = "sonuc.csv", sep = ";", quote = FALSE, x=logsig_ptd, dec = ",")
 ```
 
-boxplot iEleri (exstra bilgi)
+Boxplot islemlerini yapalim (ekstra bilgi).
 
 ```{r}
 #par(mfrow = c(4,6))
