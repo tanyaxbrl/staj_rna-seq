@@ -1,6 +1,6 @@
 ---
 title: "Differential Expression Analysis with DESeq"
-author: "Yasemin ??rem ??AH??N"
+author: "Yasemin Irem SAHIN"
 format: html
 editor: visual
 ---
